@@ -1,13 +1,13 @@
-def dodawanie(a:float, b:float)-> tuple[int]:
-    return (f"{a} + {b} = {a+b}")
+def dodawanie(a, b):
+    return a + b
 
-def odejmowanie(a:float, b:float)-> tuple[int]:
+def odejmowanie(a, b):
     return a - b
 
-def mnozenie(a:float, b:float)-> tuple[int]:
+def mnozenie(a, b):
     return a * b
 
-def dzielenie(a:float, b:float)-> tuple[int]:
+def dzielenie(a, b):
     return a / b
 
 while True:
