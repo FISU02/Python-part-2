@@ -1,0 +1,16 @@
+from main import czytelnik
+
+czytelnik1=czytelnik("Janek","Kowalski",22)
+czytelnik2=czytelnik("Arek","Nowak",22)
+czytelnik3=czytelnik("Filip","Dawidowicz",22)
+czytelnik4=czytelnik("Mateusz","Dąb",22)
+czytelnik5=czytelnik("Jakub","Kompost",22)
+
+print(f"Id: {czytelnik2.get_id()}")
+print("Imię: "+czytelnik2.get_imie())
+print("Nazwisko: "+czytelnik2.get_nazwisko())
+print(f"wiek: {czytelnik2.get_wiek()}")
+
+
+
+

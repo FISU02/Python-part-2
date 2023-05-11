@@ -12,6 +12,15 @@ class czytelnik:
         self.wiek = wiek 
 
     
+    def get_id(self):
+        return self.id
+    def get_imie(self):
+        return self.imie
+    def get_nazwisko(self):
+        return self.nazwisko
+    def get_wiek(self):
+        return self.id
+    
 
 
 
