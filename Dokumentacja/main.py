@@ -1,16 +1,21 @@
 def dodawanie(a:float, b:float)-> tuple[int]:
+    """Funkcja zwraca sumę dwóch liczb"""
     return (f"{a} + {b} = {a+b}")
 
 def odejmowanie(a:float, b:float)-> tuple[int]:
+    """Funkcja zwraca różnicę dwóch liczb"""
     return a - b
 
 def mnozenie(a:float, b:float)-> tuple[int]:
+    """Funkcja zwraca iloczyn dwóch liczb"""
     return a * b
 
 def dzielenie(a:float, b:float)-> tuple[int]:
+     """Funkcja zwraca iloraz dwóch liczb"""
     return a / b
 
 while True:
+     """Funkcja wyświetla dostępne operacje"""
     print("Wybierz operację:")
     print("1. Dodawanie")
     print("2. Odejmowanie")
