@@ -1,182 +1,192 @@
 import json
-from datetime import datetime, timedelta
+from typing import List, Dict
+from datetime import datetime
 import os
-
 
 class TaskManager:
     def __init__(self):
-        self.tasks = []
+        self._tasks: List[Dict[str, str]] = []
+    
+    def validate_day(self, prompt: str) -> str:
+        """
+        Walidacja dnia tygodnia.
+        """
+        valid_days: List[str] = [
+            "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"
+        ]
+        while True:
+            day_of_week: str = input(prompt)
+            if not day_of_week:
+                return "" 
+            elif day_of_week.lower() in valid_days:
+                return day_of_week.lower()
+            else:
+                print("Niepoprawny dzień tygodnia. Spróbuj ponownie.")
 
-    def clear_tasks(self):
-        self.tasks.clear()
-
-    def add_task(self, title, description, due_date):
-        task_id = len(self.tasks) + 1
-        task = Task(task_id, title, description, due_date)
-        self.tasks.append(task)
-        print("Dodano nowe zadanie o ID: ", task_id)
-
-    def delete_task(self, task_id):
-        for task in self.tasks:
-            if task.task_id == task_id:
-                self.tasks.remove(task)
-                print("Usunięto zadanie o ID:", task_id)
-                return
-        print("Nie znaleziono zadania o podanym ID.")
-
-    def update_task(self, task_id, title, description, due_date):
-        for task in self.tasks:
-            if task.task_id == task_id:
-                task.title = title
-                task.description = description
-                task.due_date = due_date
-                print("Zaktualizowano zadanie o ID:", task_id)
-                return
-        print("Nie znaleziono zadania o podanym ID.")
-
-    def get_task(self, task_id):
-        for task in self.tasks:
-            if task.task_id == task_id:
-                return task
-        return None
-
-    def get_all_tasks(self):
-        if len(self.tasks) == 0:
-            print("Brak zapisanych zadań.")
+    def add_task(self) -> None:
+        """
+        Dodawanie nowe zadanie do listy.
+        """
+        title: str = input("Podaj nazwę zadania:")
+        description: str = input("Podaj opis zadania: ")
+        while True:
+            deadline: str = input("Podaj deadline: (YYYY-MM-DD): ")
+            try:
+                datetime.strptime(deadline, "%Y-%m-%d")
+                break
+            except ValueError:
+                print("Niepoprawny format daty. Spróbuj ponownie.")
+        day_of_week: str = self.validate_day("Podaj dzień tygodnia po angielsku: Zostaw puste jeżeli bez dnia tygodnia!")
+        task_ids = [int(task["id"]) for task in self._tasks]
+        if task_ids:
+            max_id = max(task_ids)
+            available_ids = [i for i in range(1, max_id + 2) if i not in task_ids]
+            task_id = min(available_ids)
         else:
-            for task in self.tasks:
-                print("ID:", task.task_id)
-                print("Tytuł:", task.title)
-                print("Termin wykonania:", task.due_date.strftime("%Y-%m-%d"))
-                print("Opis:", task.description)
+            task_id = 1
+        
+        task: Dict[str, str] = {"id": str(task_id), "title": title, "description": description, "deadline": deadline, "day_of_week": day_of_week}
+        self._tasks.append(task)
+        print("Zadanie dodane!")
+        
+    def display_tasks(self) -> None:
+        """
+        Wyświetlanie zadania.
+        """
+        if not self._tasks:
+            print("Brak zadań do wyświetlenia.")
+            return
+        day_of_week: str = self.validate_day("Wprowadź dzień tygodnia, aby wyświetlić zadania (zostaw puste, aby wyświetlić wszystkie zadania): ")
+        found_tasks: bool = False
+        for task in self._tasks:
+            if not day_of_week or task['day_of_week'].lower() == day_of_week.lower():
+                print(f"ID:{task['id']} Nazwa: {task['title']} (Deadline: {task['deadline']})")
+                show_description: str = input("Czy chcesz zobaczyć opis? (t/n): ")
+                if show_description.lower() == 't':
+                    print(f"Opis: {task['description']}")
+                found_tasks = True
+        if not found_tasks:
+            print(f"Brak zadań dla {day_of_week}.")
 
-    def save_tasks_to_file(self, file_path):
-        tasks_data = []
-        for task in self.tasks:
-            task_data = {
-                "task_id": task.task_id,
-                "title": task.title,
-                "description": task.description,
-                "due_date": task.due_date.strftime("%Y-%m-%d")
-            }
-            tasks_data.append(task_data)
+    def display_tasks_onenter(self) -> None:
+        """
+        Wyswietlanie zadania przy uruchomieniu.
+        """
+        self.load_tasks()
+        if not self._tasks:
+            print("Brak zadań do wyświetlenia.")
+            return
+        found_tasks: bool = False
+        for task in self._tasks:
+                print(f"ID:{task['id']} Nazwa: {task['title']} (Deadline: {task['deadline']})")
+                show_description: str = input("Czy chcesz zobaczyć opis? (t/n): ")
+                if show_description.lower() == 't':
+                    print(f"Opis: {task['description']}")
+                found_tasks = True
+        
 
-        with open(file_path, "w") as file:
-            json.dump(tasks_data, file, indent=4)
+    def delete_task(self) -> None:
+        """
+        Usuwawanie zadania..
+        """
+        task_id: int = int(input("Podaj ID zadania: "))
+        for task in self._tasks:
+            if task['id'] == str(task_id):
+                self._tasks.remove(task)
+                print("Zadanie usunięte pomyślnie.")
+                return
+        print("Zadanie nie znalezione.")
 
-    def load_tasks_from_file(self, file_path):
+    def update_task(self) -> None:
+        """
+        Aktualizowanie zadania.
+        """
+        task_id: int = int(input("Podaj ID zadania: "))
+        for task in self._tasks:
+            if task['id'] == str(task_id):
+                title: str = input("Podaj nową nazwę (pozostaw puste, aby zachować starą): ")
+                description: str = input("Podaj nowy opis (pozostaw puste, aby zachować stary): ")
+                deadline: str = input("Podaj nowy deadline (pozostaw puste, aby zachować stary): ")
+                day_of_week: str = input("Podaj nowy dzień tygodnia (pozostaw puste, aby zachować stary): ")
+                if title:
+                    task['title'] = title
+                if description:
+                    task['description'] = description
+                if deadline:
+                    task['deadline'] = deadline
+                if day_of_week:
+                    task['day_of_week'] = day_of_week
+                print("Zadanie zaktualizowane pomyślnie.")
+                return
+        print("Zadanie nie znalezione.")
+
+    def save_tasks(self) -> None:
+        """
+        Zapisywanie zadania.
+        """
+        dir_path = os.path.dirname(os.path.abspath(__file__))
+        save_path = os.path.join(dir_path, "tasks.json")
+        with open(save_path, "w") as f:
+            json.dump(self._tasks, f)
+        print("Zadania zapisane do pliku.")
+
+    def load_tasks(self) -> None:
+        """
+        Odczyt zadania.
+        """
+        dir_path = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(dir_path, "tasks.json")
         try:
-            with open(file_path, "r") as file:
-                tasks_data = json.load(file)
-                task_data = sorted(file, key=lambda x: x['task_id'])
-            for task_data in tasks_data:
-                task_id = task_data["task_id"]
-                title = task_data["title"]
-                description = task_data["description"]
-                due_date = datetime.strptime(task_data["due_date"], "%Y-%m-%d")
-                task = Task(task_id, title, description, due_date)
-                self.tasks.append(task)
-
-            print("Załadowano zapisane zadania.")
+            with open(file_path, "r") as f:
+                self._tasks = json.load(f)
         except FileNotFoundError:
-            print("Nie znaleziono pliku z zapisanymi zadaniami.")
+            pass
 
-def display_menu():
-    print(" MENU ")
-    print("1. Dodaj nowe zadanie")
-    print("2. Wyświetl zadanie")
-    print("2a. Wyświetl zadanie wraz z opisem")
-    print("3. Usuń zadanie")
-    print("4. Zaktualizuj zadanie")
-    print("5. Zapisz zadania do pliku")
-    print("6. Wczytaj zadania z pliku")
-    print("7. Wyświetl wszystkie zadania")
-    print("8. Wyjście")
+    def get_tasks(self) -> List[Dict[str, str]]:
+        """
+        Lista zadań.
+        """
+        return self._tasks
 
-def validate_datetime(date_str):
-    try:
-        return datetime.strptime(date_str, "%Y-%m-%d").date()
-    except ValueError:
-        print("Niepoprawny format daty. Wprowadź datę w formacie RRRR-MM-DD.")
-        return None
+    def menu(self) -> None:
+        """
+        Wyświetlanie menu.
+        """
+        print("""
+        1. Dodaj zadanie
+        2. Wyświetl zadania
+        3. Usuń zadanie
+        4. Zaktualizuj zadanie
+        5. Zapisz zadania
+        6. Wyjście
+        """)
 
-def main():
-    task_manager = TaskManager()
-    file_path = os.path.join(os.path.dirname(__file__), "zapisy", "autozapis" )
-    task_manager.load_tasks_from_file(file_path)
-    task_manager.get_all_tasks()
-    while True:
-        display_menu()
-        choice = input("Wybierz opcję: ")
-        if choice == "1":
-            title = input("Podaj tytuł zadania: ")
-            description = input("Podaj opis zadania: ")
-            due_date_str = input("Podaj termin wykonania (RRRR-MM-DD): ")
-            due_date = validate_datetime(due_date_str)
-            if due_date is not None:
-                task_manager.add_task(title, description, due_date)
-        elif choice == "2":
-            task_id = int(input("Podaj ID zadania do wyświetlenia: "))
-            task = task_manager.get_task(task_id)
-            if task:
-                print("ID:", task.task_id)
-                print("Tytuł:", task.title)
-                print("Termin wykonania:", task.due_date)
+    def run(self) -> None:
+        """
+        Pętla programu.
+        """
+        self.load_tasks()
+
+        while True:
+            self.menu()
+            choice: str = input("Wybierz opcję: ")
+            if choice == '1':
+                self.add_task()
+            elif choice == '2':
+                self.display_tasks()
+            elif choice == '3':
+                self.delete_task()
+            elif choice == '4':
+                self.update_task()
+            elif choice == '5':
+                self.save_tasks()
+            elif choice == '6':
+                self.save_tasks()
+                print("Do widzenia!")
+                break
             else:
-                print("Nie znaleziono zadania o podanym ID.")
-        elif choice == "2a":
-            task_id = int(input("Podaj ID zadania do wyświetlenia: "))
-            task = task_manager.get_task(task_id)
-            if task:
-                print("ID:", task.task_id)
-                print("Tytuł:", task.title)
-                print("Termin wykonania:", task.due_date)
-                print("Opis:", task.description)
-            else:
-                print("Nie znaleziono zadania o podanym ID.")
-        elif choice == "3":
-            task_id = int(input("Podaj ID zadania do usunięcia: "))
-            task_manager.delete_task(task_id)
-        elif choice == "4":
-            task_id = int(input("Podaj ID zadania do zaktualizowania: "))
-            title = input("Podaj nowy tytuł zadania: ")
-            description = input("Podaj nowy opis zadania: ")
-            due_date_str = input("Podaj nowy termin wykonania (RRRR-MM-DD): ")
-            due_date = validate_datetime(due_date_str)
-            if due_date is not None:
-                task_manager.update_task(task_id, title, description, due_date)
-        elif choice == "5":
-            filename = input("Podaj nazwę pliku do zapisu: ")
-            file_path = os.path.join(os.path.dirname(__file__), "zapisy", filename )
-            task_manager.save_tasks_to_file(file_path)
-            print("Zapisano zadania do pliku.")
-        elif choice == "6":
-            print("UWAGA! Ta operacja wymaga usunięcia dotychczasowych zadań!")
-            print("Wpisz: 'tak', aby potwierdzić lub pozostaw pole puste, aby wrócić do menu głównego")
-            potwierdzenie = input("Czy potwierdzasz operację usnięcia?: ")
-            if potwierdzenie == "tak":
-                task_manager.clear_tasks()
-                filename = input("Podaj nazwę pliku do wczytania: ")
-                file_path = os.path.join(os.path.dirname(__file__), "zapisy", filename )
-                task_manager.load_tasks_from_file(file_path)
-            else:
-                continue
-        elif choice == "7":
-            task_manager.get_all_tasks()
-        elif choice == "8":
-            file_path = os.path.join(os.path.dirname(__file__), "zapisy", "autozapis" )
-            task_manager.save_tasks_to_file(file_path)   
-            print("Program zakończył swoje działanie.")
-            break
-        else:
-            print("Nieprawidłowa opcja. Wybierz ponownie.")
-class Task:
-    def __init__(self, task_id, title, description, due_date):
-        self.task_id = task_id
-        self.title = title
-        self.description = description
-        self.due_date = due_date
+                print("Niepoprawny wybór, wybierz opcje od 1 do 6!")
 
-
-if __name__ == "__main__":
-    main()
+task_manager = TaskManager()
+task_manager.display_tasks_onenter()
+task_manager.run()
